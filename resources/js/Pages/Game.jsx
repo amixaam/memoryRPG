@@ -21,9 +21,6 @@ export default function Game({ auth }) {
     };
     let selectedDifficulty = 0;
     let difficultyScaling = 2;
-    let flippedCards = [];
-    let matchedCards = [];
-    let moves = 0;
     let timer = 0;
     let timerInterval;
     let timerRunning = false;
@@ -32,6 +29,10 @@ export default function Game({ auth }) {
     let gameStarted = false;
 
     const [cards, setCards] = useState([]);
+    const [selectedCards, setSelectedsCards] = useState([]);
+    const [matchedCards, setMatchedCards] = useState([]);
+    const [moves, setMoves] = useState(0);
+    const [testMessage, setTestMessage] = useState("Hello!");
 
     function generateCards() {
         setCards([]); // Clear existing cards
@@ -45,9 +46,10 @@ export default function Game({ auth }) {
             let randomColor;
 
             // Ensure unique colors for each pair
-            do {
-                randomColor = chroma.random();
-            } while (colorsUsed[randomColor]);
+            // do {
+
+            randomColor = chroma.random().hex();
+            // } while (colorsUsed[randomColor]);
 
             colorsUsed[randomColor] = true; // Mark color as used
 
@@ -55,13 +57,13 @@ export default function Game({ auth }) {
             newCards.push(
                 ...[
                     {
-                        id: i,
+                        id: i * 2,
                         color: randomColor,
                         flipped: false,
                         matched: false,
                     },
                     {
-                        id: i,
+                        id: i * 2 + 1,
                         color: randomColor,
                         flipped: false,
                         matched: false,
@@ -72,7 +74,32 @@ export default function Game({ auth }) {
         setCards(newCards);
     }
 
-    function startGame() {}
+    function flipCard(card) {
+        setSelectedsCards([...selectedCards, card]);
+        if (selectedCards.length === 2) {
+            checkMove();
+        }
+    }
+
+    function checkMove() {
+        setMoves(moves + 1);
+        if (selectedCards[0].color === selectedCards[1].color) {
+            setMatchedCards([...matchedCards, ...selectedCards]);
+            setSelectedsCards([]);
+            setTestMessage("It's a match!");
+        } else {
+            setTestMessage("Not a match.");
+            setSelectedsCards([]);
+        }
+    }
+
+    function startGame() {
+        setSelectedsCards([]);
+        setMatchedCards([]);
+        setMoves(0);
+        setTestMessage("Game started!");
+        generateCards();
+    }
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="MemoryRPG" />
@@ -80,24 +107,39 @@ export default function Game({ auth }) {
                 {cards.map((card) => (
                     <div
                         key={card.id}
-                        className="w-fit bg-slate-500 p-2 radius rounded-md aspect-square min-w-36"
+                        className="w-fit bg-slate-500 p-2 radius rounded-md aspect-square min-w-36 cursor-pointer"
+                        onClick={() => flipCard(card)}
                     >
                         <p
                             style={{
                                 backgroundColor: card.color,
+                                color: chroma(card.color)
+                                    .darken(2)
+                                    .desaturate()
+                                    .hex(),
                             }}
-                            className="h-full rounded-md flex items-center justify-center"
+                            className="h-full rounded-md flex items-center justify-center shadow-md text-md font-bold"
                         >
                             {card.color}
                         </p>
                     </div>
                 ))}
             </div>
-            <PrimaryButton onClick={generateCards}>
-                Generate Cards
-            </PrimaryButton>
-            <p className="text-primary-200 py-4">hi</p>
-            <span className=" text-white">{JSON.stringify(cards)}</span>
+            <PrimaryButton onClick={startGame}>Generate Cards</PrimaryButton>
+            <p className="text-primary-200 py-4">{testMessage}</p>
+            <div className="flex flex-col gap-4">
+                <span className=" text-white">{JSON.stringify(cards)}</span>
+
+                <span className=" text-white">
+                    selected cards:
+                    {JSON.stringify(selectedCards)}
+                </span>
+
+                <span className=" text-white">
+                    matched cards:
+                    {JSON.stringify(matchedCards)}
+                </span>
+            </div>
         </AuthenticatedLayout>
     );
 }
