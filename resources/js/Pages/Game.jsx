@@ -2,7 +2,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import chroma from "chroma-js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Game({ auth }) {
     const colors = ["red", "blue", "yellow", "green"];
@@ -45,11 +45,7 @@ export default function Game({ auth }) {
         for (let i = 0; i < cardCount / 2; i++) {
             let randomColor;
 
-            // Ensure unique colors for each pair
-            // do {
-
             randomColor = chroma.random().hex();
-            // } while (colorsUsed[randomColor]);
 
             colorsUsed[randomColor] = true; // Mark color as used
 
@@ -75,20 +71,34 @@ export default function Game({ auth }) {
     }
 
     function flipCard(card) {
-        setSelectedsCards([...selectedCards, card]);
-        if (selectedCards.length === 2) {
-            checkMove();
+        if (
+            gameOver ||
+            selectedCards.includes(card) ||
+            matchedCards.includes(card)
+        ) {
+            return;
         }
+
+        setSelectedsCards([...selectedCards, card]);
     }
 
-    function checkMove() {
-        setMoves(moves + 1);
-        if (selectedCards[0].color === selectedCards[1].color) {
+    useEffect(() => {
+        if (selectedCards.length === 2) {
+            checkForMatch();
+        }
+    }, [selectedCards]);
+
+    function checkForMatch() {
+        if (
+            selectedCards[0].color === selectedCards[1].color &&
+            selectedCards[0].id !== selectedCards[1].id
+        ) {
             setMatchedCards([...matchedCards, ...selectedCards]);
+            setTestMessage("Match found!");
             setSelectedsCards([]);
-            setTestMessage("It's a match!");
+            setMoves(moves + 1);
         } else {
-            setTestMessage("Not a match.");
+            setTestMessage("No match found!");
             setSelectedsCards([]);
         }
     }
