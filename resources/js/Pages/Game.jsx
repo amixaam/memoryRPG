@@ -13,7 +13,7 @@ dayjs.extend(duration);
 function Card({ card, flipCard, showBack = false }) {
     return (
         <div
-            className="w-fit min-w-32 border-primary500 bg-text backdrop-blur-xl p-2 radius rounded-md aspect-square flex-1 cursor-pointer"
+            className="w-fit min-w-32 border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-md aspect-square flex-1 cursor-pointer"
             onClick={() => flipCard(card)}
         >
             {showBack || card.flipped || card.matched ? (
@@ -36,17 +36,19 @@ function Card({ card, flipCard, showBack = false }) {
 function ProgressBar({ max, current, show }) {
     if (!show) return;
     return (
-        <div className="w-full flex justify-center">
-            <div className="fixed bottom-2 w-10/12 bg-primary100 rounded-lg p-2 shadow-md">
-                <div
-                    className="h-4 bg-primary900 rounded-md flex items-center"
-                    style={{
-                        width: `${Math.abs((current / max) * 100 - 100)}%`,
-                    }}
-                >
-                    <p className="ml-1 text-primary100">
-                        {Math.round(Math.abs((current / max) * 100 - 100))}%
-                    </p>
+        <div className="fixed bottom-0 left-0 right-0 flex h-16 pointer-events-none z-10">
+            <div className="w-full flex justify-center">
+                <div className="fixed bottom-2 w-10/12 bg-primary100 rounded-lg p-2 shadow-sm">
+                    <div
+                        className="h-4 bg-primary900 rounded-md flex items-center"
+                        style={{
+                            width: `${Math.abs((current / max) * 100 - 100)}%`,
+                        }}
+                    >
+                        <p className="ml-1 text-primary100">
+                            {Math.round(Math.abs((current / max) * 100 - 100))}%
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -80,7 +82,7 @@ export default function Game({ auth, backgrounds }) {
 
     const [level, setLevel] = useState(1);
     const [difficulty, setDifficulty] = useState({
-        easy: 2,
+        easy: 20,
         medium: 4,
         hard: 6,
     });
@@ -104,7 +106,7 @@ export default function Game({ auth, backgrounds }) {
     const [moves, setMoves] = useState(0);
     const [errors, setErrors] = useState(0);
 
-    const [bossLevel, setBossLevel] = useState(false);
+    const [bossLevel, setBossLevel] = useState(true);
 
     const [shopOpen, setShopOpen] = useState(false);
 
@@ -270,51 +272,23 @@ export default function Game({ auth, backgrounds }) {
     function startGame() {
         setGameStarted(!gameStarted);
     }
+
     return (
         <AuthenticatedLayout user={auth.user}>
-            <style>
-                {`
-                    img[alt="boss fight"] {
-                        -webkit-filter: invert(100%) sepia(0%) saturate(0%)
-                            hue-rotate(180deg) brightness(100%) contrast(100%);
-                        filter:invert(100%) sepia(0%) saturate(0%)
-                            hue-rotate(180deg) brightness(100%) contrast(100%);
-                    }
-                `}
-            </style>
-            <img src={shrek} alt="boss fight" className="fixed -z-10" />
+            <Head title="MemoryRPG" />
 
             <Modal show={shopOpen} onClose={() => setShopOpen(false)}>
-                <div className="text-white">
-                    <h1>SHOP</h1>
-                    <p className="text-primary-200">Points: {points}</p>
-                </div>
+                <h1>SHOP</h1>
+                <p className="">Points: {points}</p>
             </Modal>
-            <div className="fixed bottom-0 left-0 right-0 flex justify-center items-center h-16">
-                <div className="w-full">
-                    <ProgressBar
-                        max={cards.length}
-                        current={matchedCards.length}
-                        show={bossLevel}
-                    />
-                </div>
-            </div>
 
-            <Head title="MemoryRPG" />
-            <div className="flex gap-4 pt-4">
-                <p className="text-primary900">Level {level}</p>
-                <p className="text-primary900">Points: {points}</p>
-                <p className="text-primary900">
-                    game started: {gameStarted ? "true" : "false"}
-                </p>
-                <p className="text-primary900">
-                    Timer: {dayjs.duration(timer * 1000).format("mm:ss")}
-                </p>
-                <p className="text-primary900">Scaling: {difficultyScaling}</p>
-            </div>
+            <ProgressBar
+                max={cards.length}
+                current={matchedCards.length}
+                show={bossLevel}
+            />
 
-            {/* Cards */}
-            <div className="flex justify-center items-center h-4/5">
+            <div className="flex justify-center items-end w-full h-full">
                 <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
                     {cards.map((card) => (
                         <Card
@@ -326,6 +300,14 @@ export default function Game({ auth, backgrounds }) {
                     ))}
                 </div>
             </div>
+
+            <Statistics>
+                <p>Moves: {moves}</p>
+                <p>Level: {level}</p>
+                <p>Points: {points}</p>
+                <p>Timer: {dayjs.duration(timer * 1000).format("mm:ss")}</p>
+            </Statistics>
+
             <div className="flex gap-4 justify-center pt-4">
                 <PrimaryButton onClick={startGame}>restart</PrimaryButton>
                 <PrimaryButton onClick={() => showAllCards()}>
@@ -334,10 +316,20 @@ export default function Game({ auth, backgrounds }) {
                 <PrimaryButton onClick={() => setShopOpen(true)}>
                     Shop
                 </PrimaryButton>
-                <PrimaryButton onClick={() => changeTheme()}>
-                    theme
-                </PrimaryButton>
+                <PrimaryButton onClick={changeTheme}>theme</PrimaryButton>
             </div>
+
+            {/* <img
+                src={shrek}
+                alt="boss fight"
+                className="fixed brightness-0 pointer-events-none"
+            /> */}
         </AuthenticatedLayout>
+    );
+}
+
+function Statistics({ children }) {
+    return (
+        <div className="text-primary900 flex flex-row gap-2">{children}</div>
     );
 }
