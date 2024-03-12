@@ -7,26 +7,27 @@ import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 
+import shrek from "../../../public/images/shrek.webp";
 dayjs.extend(duration);
 
 function Card({ card, flipCard, showBack = false }) {
     return (
         <div
-            className="w-fit bg-slate-500 p-2 radius rounded-md aspect-square min-w-36 cursor-pointer"
+            className="w-fit min-w-32 border-primary500 bg-text backdrop-blur-xl p-2 radius rounded-md aspect-square flex-1 cursor-pointer"
             onClick={() => flipCard(card)}
         >
             {showBack || card.flipped || card.matched ? (
                 <p
                     style={{
                         backgroundColor: card.color,
-                        color: chroma(card.color).darken(2).desaturate().hex(),
+                        color: chroma(card.color).darken(2).desaturate(2).hex(),
                     }}
-                    className="h-full rounded-md flex items-center justify-center shadow-md text-md font-bold"
+                    className="h-full rounded-md flex items-center justify-center text-md font-bold p-4"
                 >
                     {card.color}
                 </p>
             ) : (
-                <p className="h-full rounded-md flex items-center justify-center text-md font-bold"></p>
+                <p className=""></p>
             )}
         </div>
     );
@@ -36,14 +37,14 @@ function ProgressBar({ max, current, show }) {
     if (!show) return;
     return (
         <div className="w-full flex justify-center">
-            <div className="fixed bottom-2 w-10/12 bg-gray-200 dark:bg-gray-800 rounded-lg p-2 shadow-md">
+            <div className="fixed bottom-2 w-10/12 bg-primary100 rounded-lg p-2 shadow-md">
                 <div
-                    className="h-4 bg-red-500 rounded-md flex items-center"
+                    className="h-4 bg-primary900 rounded-md flex items-center"
                     style={{
                         width: `${Math.abs((current / max) * 100 - 100)}%`,
                     }}
                 >
-                    <p className="ml-1">
+                    <p className="ml-1 text-primary100">
                         {Math.round(Math.abs((current / max) * 100 - 100))}%
                     </p>
                 </div>
@@ -52,13 +53,29 @@ function ProgressBar({ max, current, show }) {
     );
 }
 
-export default function Game({ auth }) {
-    const colors = ["red", "blue", "yellow", "green"];
+export default function Game({ auth, backgrounds }) {
+    const bgColors = ["#F6B8FF", "#FFFFDD", "#123632"];
+    const text = ["#1F0923", "#242414", "#D2FDF8"];
+
+    console.log(backgrounds);
     function changeTheme() {
+        const random = Math.floor(Math.random() * bgColors.length);
+        const bgColor = chroma(bgColors[random]);
+        const palette = chroma
+            .scale([bgColors[random], text[random]])
+            .colors(10);
+        console.log(palette);
+
         document.documentElement.style.setProperty(
-            "--bg",
-            colors[Math.floor(Math.random() * colors.length)]
+            "--bg-gradient",
+            `linear-gradient(${palette[0]} 20%, ${palette[3]})`
         );
+        for (let i = 0; i < palette.length; i++) {
+            document.documentElement.style.setProperty(
+                `--color-${i * 100}`,
+                palette[i]
+            );
+        }
     }
 
     const [level, setLevel] = useState(1);
@@ -253,16 +270,27 @@ export default function Game({ auth }) {
     function startGame() {
         setGameStarted(!gameStarted);
     }
-
     return (
         <AuthenticatedLayout user={auth.user}>
+            <style>
+                {`
+                    img[alt="boss fight"] {
+                        -webkit-filter: invert(100%) sepia(0%) saturate(0%)
+                            hue-rotate(180deg) brightness(100%) contrast(100%);
+                        filter:invert(100%) sepia(0%) saturate(0%)
+                            hue-rotate(180deg) brightness(100%) contrast(100%);
+                    }
+                `}
+            </style>
+            <img src={shrek} alt="boss fight" className="fixed -z-10" />
+
             <Modal show={shopOpen} onClose={() => setShopOpen(false)}>
-                <div className=" text-white">
+                <div className="text-white">
                     <h1>SHOP</h1>
                     <p className="text-primary-200">Points: {points}</p>
                 </div>
             </Modal>
-            <div className="fixed bottom-0 left-0 right-0 flex justify-center items-center h-16 bg-primary-800">
+            <div className="fixed bottom-0 left-0 right-0 flex justify-center items-center h-16">
                 <div className="w-full">
                     <ProgressBar
                         max={cards.length}
@@ -274,35 +302,40 @@ export default function Game({ auth }) {
 
             <Head title="MemoryRPG" />
             <div className="flex gap-4 pt-4">
-                <p className="text-primary-200">Level {level}</p>
-                <p className="text-primary-200">Points: {points}</p>
-                <p className="text-primary-200">
+                <p className="text-primary900">Level {level}</p>
+                <p className="text-primary900">Points: {points}</p>
+                <p className="text-primary900">
                     game started: {gameStarted ? "true" : "false"}
                 </p>
-                <p className="text-primary-200">
+                <p className="text-primary900">
                     Timer: {dayjs.duration(timer * 1000).format("mm:ss")}
                 </p>
-                <p className="text-primary-200">Scaling: {difficultyScaling}</p>
+                <p className="text-primary900">Scaling: {difficultyScaling}</p>
             </div>
-            <div className="gap-4 w-full flex flex-row flex-wrap justify-center">
-                {cards.map((card) => (
-                    <Card
-                        key={card.id}
-                        card={card}
-                        flipCard={flipCard}
-                        showBack={showBack}
-                    />
-                ))}
+
+            {/* Cards */}
+            <div className="flex justify-center items-center h-4/5">
+                <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
+                    {cards.map((card) => (
+                        <Card
+                            key={card.id}
+                            card={card}
+                            flipCard={flipCard}
+                            showBack={showBack}
+                        />
+                    ))}
+                </div>
             </div>
             <div className="flex gap-4 justify-center pt-4">
-                <PrimaryButton onClick={startGame}>
-                    Give up/Start new
-                </PrimaryButton>
+                <PrimaryButton onClick={startGame}>restart</PrimaryButton>
                 <PrimaryButton onClick={() => showAllCards()}>
-                    show
+                    Powerups
                 </PrimaryButton>
                 <PrimaryButton onClick={() => setShopOpen(true)}>
                     Shop
+                </PrimaryButton>
+                <PrimaryButton onClick={() => changeTheme()}>
+                    theme
                 </PrimaryButton>
             </div>
         </AuthenticatedLayout>

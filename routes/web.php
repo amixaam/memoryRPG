@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Models\Background;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -25,8 +26,10 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/game', function () {
-    return Inertia::render('Game');
+Route::get('/', function () {
+    return Inertia::render('Game', [
+        'backgrounds' => Background::all(),
+    ]);
 })->middleware(['auth', 'verified'])->name('game');
 
 Route::middleware('auth')->group(function () {
