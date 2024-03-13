@@ -23,6 +23,7 @@ export default {
                 primary700: "var(--color-700)",
                 primary800: "var(--color-800)",
                 primary900: "var(--color-900)",
+                gradient: "var(--bg-gradient)",
             },
             fontFamily: {
                 sans: ["Figtree", ...defaultTheme.fontFamily.sans],

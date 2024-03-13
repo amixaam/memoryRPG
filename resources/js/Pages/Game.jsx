@@ -10,54 +10,9 @@ import duration from "dayjs/plugin/duration";
 import shrek from "../../../public/images/shrek.webp";
 dayjs.extend(duration);
 
-function Card({ card, flipCard, showBack = false }) {
-    return (
-        <div
-            className="w-fit min-w-32 border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-md aspect-square flex-1 cursor-pointer"
-            onClick={() => flipCard(card)}
-        >
-            {showBack || card.flipped || card.matched ? (
-                <p
-                    style={{
-                        backgroundColor: card.color,
-                        color: chroma(card.color).darken(2).desaturate(2).hex(),
-                    }}
-                    className="h-full rounded-md flex items-center justify-center text-md font-bold p-4"
-                >
-                    {card.color}
-                </p>
-            ) : (
-                <p className=""></p>
-            )}
-        </div>
-    );
-}
-
-function ProgressBar({ max, current, show }) {
-    if (!show) return;
-    return (
-        <div className="fixed bottom-0 left-0 right-0 flex h-16 pointer-events-none z-10">
-            <div className="w-full flex justify-center">
-                <div className="fixed bottom-2 w-10/12 bg-primary100 rounded-lg p-2 shadow-sm">
-                    <div
-                        className="h-4 bg-primary900 rounded-md flex items-center"
-                        style={{
-                            width: `${Math.abs((current / max) * 100 - 100)}%`,
-                        }}
-                    >
-                        <p className="ml-1 text-primary100">
-                            {Math.round(Math.abs((current / max) * 100 - 100))}%
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 export default function Game({ auth, backgrounds }) {
-    const bgColors = ["#F6B8FF", "#FFFFDD", "#123632"];
-    const text = ["#1F0923", "#242414", "#D2FDF8"];
+    const bgColors = ["#F6B8FF", "#FFFFDD", "#123632", "#080303"];
+    const text = ["#1F0923", "#242414", "#D2FDF8", "#FF3232"];
 
     console.log(backgrounds);
     function changeTheme() {
@@ -68,10 +23,6 @@ export default function Game({ auth, backgrounds }) {
             .colors(10);
         console.log(palette);
 
-        document.documentElement.style.setProperty(
-            "--bg-gradient",
-            `linear-gradient(${palette[0]} 20%, ${palette[3]})`
-        );
         for (let i = 0; i < palette.length; i++) {
             document.documentElement.style.setProperty(
                 `--color-${i * 100}`,
@@ -81,8 +32,9 @@ export default function Game({ auth, backgrounds }) {
     }
 
     const [level, setLevel] = useState(1);
+
     const [difficulty, setDifficulty] = useState({
-        easy: 20,
+        easy: 2,
         medium: 4,
         hard: 6,
     });
@@ -106,7 +58,7 @@ export default function Game({ auth, backgrounds }) {
     const [moves, setMoves] = useState(0);
     const [errors, setErrors] = useState(0);
 
-    const [bossLevel, setBossLevel] = useState(true);
+    const [bossLevel, setBossLevel] = useState(false);
 
     const [shopOpen, setShopOpen] = useState(false);
 
@@ -229,6 +181,7 @@ export default function Game({ auth, backgrounds }) {
         setTimerRunning(true);
         setGameOver(false);
         setGameWon(false);
+        setBossLevel(false);
 
         generateCards();
         showAllCards();
@@ -288,48 +241,112 @@ export default function Game({ auth, backgrounds }) {
                 show={bossLevel}
             />
 
-            <div className="flex justify-center items-end w-full h-full">
-                <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
-                    {cards.map((card) => (
-                        <Card
-                            key={card.id}
-                            card={card}
-                            flipCard={flipCard}
-                            showBack={showBack}
-                        />
-                    ))}
+            <div className="flex justify-center relative mb-4">
+                <div className="w-fit">
+                    <Statistics>
+                        <p className="bg-primary0 px-3 rounded-full">
+                            Level: {level}
+                        </p>
+                        <p className="bg-primary0 px-3 rounded-full">
+                            Points: {points}
+                        </p>
+                        <p className="bg-primary0 px-3 rounded-full">
+                            Timer:{" "}
+                            {dayjs.duration(timer * 1000).format("mm:ss")}
+                        </p>
+                    </Statistics>
+                    <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
+                        {cards.map((card) => (
+                            <Card
+                                key={card.id}
+                                card={card}
+                                flipCard={flipCard}
+                                showBack={showBack}
+                            />
+                        ))}
+                    </div>
+                </div>
+                <div className="flex gap-2 justify-center pt-4 flex-col absolute left-[calc(100%+8px)] bottom-0">
+                    <PrimaryButton onClick={startGame}>restart</PrimaryButton>
+                    <PrimaryButton onClick={() => showAllCards()}>
+                        Powerups
+                    </PrimaryButton>
+                    <PrimaryButton onClick={() => setShopOpen(true)}>
+                        Shop
+                    </PrimaryButton>
+                    <PrimaryButton onClick={changeTheme}>theme</PrimaryButton>
                 </div>
             </div>
 
-            <Statistics>
-                <p>Moves: {moves}</p>
-                <p>Level: {level}</p>
-                <p>Points: {points}</p>
-                <p>Timer: {dayjs.duration(timer * 1000).format("mm:ss")}</p>
-            </Statistics>
+            <BossImage bossLevel={bossLevel} />
+        </AuthenticatedLayout>
+    );
+}
 
-            <div className="flex gap-4 justify-center pt-4">
-                <PrimaryButton onClick={startGame}>restart</PrimaryButton>
-                <PrimaryButton onClick={() => showAllCards()}>
-                    Powerups
-                </PrimaryButton>
-                <PrimaryButton onClick={() => setShopOpen(true)}>
-                    Shop
-                </PrimaryButton>
-                <PrimaryButton onClick={changeTheme}>theme</PrimaryButton>
-            </div>
-
-            {/* <img
+function BossImage({ bossLevel }) {
+    if (!bossLevel) return;
+    return (
+        <div className="fixed top-0 left-0 w-screen h-screen flex justify-center items-center -z-[1]">
+            <img
                 src={shrek}
                 alt="boss fight"
-                className="fixed brightness-0 pointer-events-none"
-            /> */}
-        </AuthenticatedLayout>
+                className="fixed brightness-[0.05] pointer-events-none top-16"
+            />
+        </div>
     );
 }
 
 function Statistics({ children }) {
     return (
-        <div className="text-primary900 flex flex-row gap-2">{children}</div>
+        <div className="text-primary900 flex flex-row gap-2 w-full pointer-events-none mb-2">
+            {children}
+        </div>
+    );
+}
+
+function ProgressBar({ max, current, show, bossName = "Boss name" }) {
+    const [showProgress, setShowProgress] = useState(0);
+
+    useEffect(() => {
+        setShowProgress(
+            `${Math.round(Math.abs((current / max) * 100 - 100))}%`
+        );
+    }, [current, max]);
+
+    if (!show) return;
+    return (
+        <div className="pointer-events-none z-10 absolute top-0 flex flex-col items-center w-4/5 mt-2">
+            <div className="text-primary0 w-full bg-primary0 rounded-full p-1">
+                <div
+                    style={{ width: showProgress }}
+                    className="bg-primary800 rounded-full"
+                >
+                    <p className="ml-1 text-sm">{showProgress}</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function Card({ card, flipCard, showBack = false }) {
+    return (
+        <div
+            className="w-fit min-w-32 border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-md aspect-square flex-1 cursor-pointer"
+            onClick={() => flipCard(card)}
+        >
+            {showBack || card.flipped || card.matched ? (
+                <p
+                    style={{
+                        backgroundColor: card.color,
+                        color: chroma(card.color).darken(2).desaturate(2).hex(),
+                    }}
+                    className="h-full rounded-md flex items-center justify-center text-md font-bold p-4"
+                >
+                    {card.color}
+                </p>
+            ) : (
+                <p className=""></p>
+            )}
+        </div>
     );
 }

@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 :root {
-    --bg-gradient: linear-gradient(var(--bg) 20%, #000 100%);
     --color-0: #000;
     --color-100: #1a1a1a;
     --color-200: #323232;

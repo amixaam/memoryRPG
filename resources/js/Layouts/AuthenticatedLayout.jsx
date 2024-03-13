@@ -10,12 +10,8 @@ export default function Authenticated({ user, header, children }) {
         useState(false);
 
     return (
-        <div
-            className="min-h-screen"
-            style={{
-                background: "var(--bg-gradient)",
-            }}
-        >
+        <div className="min-h-screen relative grid grid-rows-[auto_1fr]">
+            <div className="min-h-screen w-full fixed -z-20 from-primary400 to-primary0 bg-gradient-to-b" />
             <nav className="bg-primary500 border-b border-primary0">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
@@ -165,16 +161,10 @@ export default function Authenticated({ user, header, children }) {
                 </div>
             </nav>
 
-            {header && (
-                <header className="bg-white dark:bg-gray-800 shadow">
-                    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {header}
-                    </div>
-                </header>
-            )}
-
-            <main className="max-w-7xl mx-auto sm:px-6 lg:px-8 relative h-[40rem]">
-                {children}
+            <main className="max-w-7xl mx-auto sm:px-6 lg:px-8 w-full flex items-end ">
+                <div className="w-full flex flex-row justify-center items-end relative h-full">
+                    {children}
+                </div>
             </main>
         </div>
     );
