@@ -13,4 +13,9 @@ class Background extends Model
         'name',
         'colors',
     ];
+
+    protected $casts = [
+        'colors' => 'array',
+    ];
+    public $timestamps = false;
 }

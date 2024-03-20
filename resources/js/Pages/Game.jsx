@@ -1,34 +1,48 @@
 import Modal from "@/Components/Modal";
 import PrimaryButton from "@/Components/PrimaryButton";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
 import chroma from "chroma-js";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
+import { useLocalStorage } from "@uidotdev/usehooks";
 
 import shrek from "../../../public/images/shrek.webp";
 dayjs.extend(duration);
 
 export default function Game({ auth, backgrounds }) {
-    const bgColors = ["#F6B8FF", "#FFFFDD", "#123632", "#080303"];
-    const text = ["#1F0923", "#242414", "#D2FDF8", "#FF3232"];
+    const [theme, setTheme] = useLocalStorage("theme", {
+        background: "#F6B8FF",
+        text: "#1F0923",
+    });
+    const [bossTheme, setBossTheme] = useState({
+        background: "#F6B8FF",
+        text: "#1F0923",
+    });
 
-    console.log(backgrounds);
-    function changeTheme() {
-        const random = Math.floor(Math.random() * bgColors.length);
-        const bgColor = chroma(bgColors[random]);
-        const palette = chroma
-            .scale([bgColors[random], text[random]])
-            .colors(10);
-        console.log(palette);
-
-        for (let i = 0; i < palette.length; i++) {
-            document.documentElement.style.setProperty(
-                `--color-${i * 100}`,
-                palette[i]
-            );
+    function ChangeTheme(colors) {
+        if (colors) {
+            setTheme({
+                background: specicic.background,
+                text: specicic.text,
+            });
         }
+        var random = Math.floor(Math.random() * backgrounds.length);
+    }
+    function ChangeThemeHandler(colors) {
+        if (specicic) {
+            setTheme({
+                background: specicic.background,
+                text: specicic.text,
+            });
+        }
+        var random = Math.floor(Math.random() * backgrounds.length);
+        const colors = JSON.parse(backgrounds[random]["colors"]);
+        setTheme({
+            background: colors.background,
+            text: colors.text,
+        });
     }
 
     const [level, setLevel] = useState(1);
@@ -109,6 +123,21 @@ export default function Game({ auth, backgrounds }) {
         return () => clearInterval(interval);
     }, [timerRunning, timer]);
 
+    useEffect(() => {
+        // THEME
+        if (theme) {
+            const palette = chroma
+                .scale([theme.background, theme.text])
+                .colors(10);
+            for (let i = 0; i < palette.length; i++) {
+                document.documentElement.style.setProperty(
+                    `--color-${i * 100}`,
+                    palette[i]
+                );
+            }
+        }
+    }, [theme]);
+
     function flipCard(card) {
         if (
             gameOver ||
@@ -151,7 +180,11 @@ export default function Game({ auth, backgrounds }) {
 
         if (level % 5 === 0) {
             setBossLevel(true);
-        } else setBossLevel(false);
+            ChangeThemeHandler(bossTheme);
+        } else {
+            setBossLevel(false);
+            ChangeThemeHandler(theme);
+        }
 
         setLevelTimer(0);
         generateCards();
@@ -291,7 +324,9 @@ export default function Game({ auth, backgrounds }) {
                     <PrimaryButton onClick={() => setShopOpen(true)}>
                         Shop
                     </PrimaryButton>
-                    <PrimaryButton onClick={changeTheme}>theme</PrimaryButton>
+                    <PrimaryButton onClick={ChangeThemeHandler}>
+                        theme
+                    </PrimaryButton>
                 </div>
             </div>
 

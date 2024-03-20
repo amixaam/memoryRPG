@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('backgrounds', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('name');
+            $table->text('name');
             $table->json('colors');
         });
     }

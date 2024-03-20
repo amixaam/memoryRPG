@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BackgroundsController;
 use App\Http\Controllers\ProfileController;
 use App\Models\Background;
 use Illuminate\Foundation\Application;
@@ -31,6 +32,8 @@ Route::get('/', function () {
         'backgrounds' => Background::all(),
     ]);
 })->middleware(['auth', 'verified'])->name('game');
+
+Route::post('/backgrounds', [BackgroundsController::class, 'create']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
