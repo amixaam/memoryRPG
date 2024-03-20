@@ -34,15 +34,12 @@ export default function Game({ auth, backgrounds }) {
     const [level, setLevel] = useState(1);
 
     const [difficulty, setDifficulty] = useState({
-        easy: 2,
-        medium: 4,
+        easy: 4,
         hard: 6,
     });
     const [selectedDifficulty, setSelectedDifficulty] = useState("easy");
-    const [difficultyScaling, setDifficultyScaling] = useState(2);
     const [timer, setTimer] = useState(0);
     const [levelTimer, setLevelTimer] = useState(0);
-    const [timerInterval, setTimerInterval] = useState();
     const [timerRunning, setTimerRunning] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [gameWon, setGameWon] = useState(false);
@@ -64,11 +61,9 @@ export default function Game({ auth, backgrounds }) {
 
     function generateCards() {
         setCards([]); // Clear existing cards
-        let cardCount =
-            difficulty[selectedDifficulty] + level * difficultyScaling;
-        if (cardCount < 4) cardCount = 4;
-        if (cardCount % 2 !== 0) cardCount = cardCount + 1;
-        if (bossLevel) cardCount += 4;
+        const floorLevel =
+            Math.floor(level / 2) === 0 ? 1 : Math.floor(level / 2);
+        let cardCount = difficulty[selectedDifficulty] * floorLevel;
 
         const newCards = [];
         const colorsUsed = {};
@@ -141,6 +136,7 @@ export default function Game({ auth, backgrounds }) {
 
     useEffect(() => {
         // NEXT LEVEL
+        if (level > 20) return;
         if (level === 1) return;
         console.log("next level");
         setSelectedsCards([]);
@@ -154,9 +150,6 @@ export default function Game({ auth, backgrounds }) {
         );
 
         if (level % 5 === 0) {
-            if (selectedDifficulty !== "easy") {
-                setDifficultyScaling(difficultyScaling + 2);
-            }
             setBossLevel(true);
         } else setBossLevel(false);
 
@@ -176,7 +169,6 @@ export default function Game({ auth, backgrounds }) {
         setPoints(0);
         setErrors(0);
         setTimer(0);
-        setDifficultyScaling(2);
         setLevelTimer(0);
         setTimerRunning(true);
         setGameOver(false);
@@ -226,6 +218,18 @@ export default function Game({ auth, backgrounds }) {
         setGameStarted(!gameStarted);
     }
 
+    function generateGridCols() {
+        const divisors = [];
+
+        for (let i = 15; i >= 4; i--) {
+            if (cards.length % i === 0) {
+                divisors.push(i);
+            }
+        }
+
+        return divisors[((divisors.length - 1) / 2) | 0];
+    }
+
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="MemoryRPG" />
@@ -251,22 +255,35 @@ export default function Game({ auth, backgrounds }) {
                             Points: {points}
                         </p>
                         <p className="bg-primary0 px-3 rounded-full">
+                            Card count: {cards.length}
+                        </p>
+                        <p className="bg-primary0 px-3 rounded-full">
                             Timer:{" "}
                             {dayjs.duration(timer * 1000).format("mm:ss")}
                         </p>
                     </Statistics>
-                    <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
+                    <div
+                        className={`grid`}
+                        style={{
+                            gridTemplateColumns: `repeat(${generateGridCols()}, 1fr)`,
+                            gap: level > 16 ? "4px" : "8px",
+                        }}
+                    >
                         {cards.map((card) => (
                             <Card
                                 key={card.id}
                                 card={card}
                                 flipCard={flipCard}
                                 showBack={showBack}
+                                cards={cards.length}
                             />
                         ))}
                     </div>
                 </div>
                 <div className="flex gap-2 justify-center pt-4 flex-col absolute left-[calc(100%+8px)] bottom-0">
+                    <PrimaryButton onClick={() => setLevel(level + 1)}>
+                        next
+                    </PrimaryButton>
                     <PrimaryButton onClick={startGame}>restart</PrimaryButton>
                     <PrimaryButton onClick={() => showAllCards()}>
                         Powerups
@@ -328,7 +345,33 @@ function ProgressBar({ max, current, show, bossName = "Boss name" }) {
     );
 }
 
-function Card({ card, flipCard, showBack = false }) {
+function Card({ card, flipCard, showBack = false, cards }) {
+    // return <div className="text-primary900">hi</div>;
+    if (cards > 20) {
+        return (
+            <div
+                className="w-fit min-w-[6rem] border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-lg aspect-square flex-1 cursor-pointer"
+                onClick={() => flipCard(card)}
+            >
+                {showBack || card.flipped || card.matched ? (
+                    <p
+                        style={{
+                            backgroundColor: card.color,
+                            color: chroma(card.color)
+                                .darken(2)
+                                .desaturate(2)
+                                .hex(),
+                        }}
+                        className="h-full rounded-lg flex items-center justify-center text-sm font-bold"
+                    >
+                        {card.color}
+                    </p>
+                ) : (
+                    <p className=""></p>
+                )}
+            </div>
+        );
+    }
     return (
         <div
             className="w-fit min-w-32 border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-md aspect-square flex-1 cursor-pointer"
