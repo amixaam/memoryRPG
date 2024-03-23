@@ -16,34 +16,13 @@ export default function Game({ auth, backgrounds }) {
         background: "#F6B8FF",
         text: "#1F0923",
     });
-    const [bossTheme, setBossTheme] = useState({
-        background: "#F6B8FF",
-        text: "#1F0923",
-    });
 
-    function ChangeTheme(colors) {
-        if (colors) {
-            setTheme({
-                background: specicic.background,
-                text: specicic.text,
-            });
-        }
-        var random = Math.floor(Math.random() * backgrounds.length);
-    }
-    function ChangeThemeHandler(colors) {
-        if (specicic) {
-            setTheme({
-                background: specicic.background,
-                text: specicic.text,
-            });
-        }
-        var random = Math.floor(Math.random() * backgrounds.length);
-        const colors = JSON.parse(backgrounds[random]["colors"]);
-        setTheme({
-            background: colors.background,
-            text: colors.text,
-        });
-    }
+    const [currentTheme, setCurrentTheme] = useState(theme);
+
+    const bossTheme = {
+        background: "#080303",
+        text: "#FF3232",
+    };
 
     const [level, setLevel] = useState(1);
 
@@ -53,7 +32,6 @@ export default function Game({ auth, backgrounds }) {
     });
     const [selectedDifficulty, setSelectedDifficulty] = useState("easy");
     const [timer, setTimer] = useState(0);
-    const [levelTimer, setLevelTimer] = useState(0);
     const [timerRunning, setTimerRunning] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [gameWon, setGameWon] = useState(false);
@@ -112,32 +90,6 @@ export default function Game({ auth, backgrounds }) {
         newCards.sort(() => Math.random() - 0.5);
     }
 
-    useEffect(() => {
-        // TIMER
-        const interval = setInterval(() => {
-            if (timerRunning) {
-                setTimer(timer + 1);
-                setLevelTimer(levelTimer + 1);
-            }
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [timerRunning, timer]);
-
-    useEffect(() => {
-        // THEME
-        if (theme) {
-            const palette = chroma
-                .scale([theme.background, theme.text])
-                .colors(10);
-            for (let i = 0; i < palette.length; i++) {
-                document.documentElement.style.setProperty(
-                    `--color-${i * 100}`,
-                    palette[i]
-                );
-            }
-        }
-    }, [theme]);
-
     function flipCard(card) {
         if (
             gameOver ||
@@ -154,103 +106,127 @@ export default function Game({ auth, backgrounds }) {
     }
 
     useEffect(() => {
-        if (selectedCards.length === 2) {
+        // check for match
+        const allMatched = matchedCards.length === cards.length;
+        if (selectedCards.length === 2 && !allMatched) {
             checkForMatch();
         }
-        // check if all cards have been matched
-        if (matchedCards.length === cards.length && moves > 1) {
+        if (allMatched && moves > 1) {
             setLevel(level + 1);
         }
     }, [selectedCards]);
 
     useEffect(() => {
-        // NEXT LEVEL
-        if (level > 20) return;
-        if (level === 1) return;
-        console.log("next level");
-        setSelectedsCards([]);
-        setMatchedCards([]);
-        setPoints(
-            points +
-                Math.floor(
-                    (cards.length * 100 + difficulty[selectedDifficulty] * 20) /
-                        (levelTimer + 1)
-                )
-        );
+        // for next level
+        if (level > 20 || level === 1) return;
 
-        if (level % 5 === 0) {
-            setBossLevel(true);
-            ChangeThemeHandler(bossTheme);
-        } else {
-            setBossLevel(false);
-            ChangeThemeHandler(theme);
-        }
+        setBossLevel(level % 5 === 0);
+        setTimeout(() => {
+            setCurrentTheme(bossLevel ? bossTheme : theme);
+            setSelectedsCards([]);
+            setMatchedCards([]);
 
-        setLevelTimer(0);
-        generateCards();
-        showAllCards(1000 + cards.length * 100);
+            setPoints(
+                (prevPoints) =>
+                    prevPoints +
+                    Math.floor(
+                        cards.length * 100 + difficulty[selectedDifficulty] * 20
+                    )
+            );
+
+            // new cards
+            generateCards();
+            revealAllCards(1000 + cards.length * 100);
+        }, 750);
     }, [level]);
 
     useEffect(() => {
-        // NEW GAME
-        if (gameStarted === false) return;
-        console.log("new game");
-        setLevel(1);
+        // for new game
+        // if (!gameStarted) return;
+
+        setTimer(0);
         setMoves(0);
         setSelectedsCards([]);
         setMatchedCards([]);
         setPoints(0);
         setErrors(0);
-        setTimer(0);
-        setLevelTimer(0);
         setTimerRunning(true);
         setGameOver(false);
         setGameWon(false);
         setBossLevel(false);
 
         generateCards();
-        showAllCards();
+        revealAllCards();
     }, [gameStarted]);
 
-    function showAllCards(time = 1000) {
+    useEffect(() => {
+        // for theme changing
+        if (currentTheme) {
+            //create color palette
+            const palette = chroma
+                .scale([currentTheme.background, currentTheme.text])
+                .colors(10);
+
+            // change :root
+            for (let i = 0; i < palette.length; i++) {
+                document.documentElement.style.setProperty(
+                    `--color-${i * 100}`,
+                    palette[i]
+                );
+            }
+        }
+    }, [theme, currentTheme]);
+
+    function startNewGame() {
+        setLevel(1);
+        setGameStarted(!gameStarted);
+    }
+    function ChangeThemeButton(newTheme = null) {
+        const themePick =
+            newTheme ||
+            backgrounds[Math.floor(Math.random() * backgrounds.length)];
+        const { background, text } = JSON.parse(themePick.colors);
+        console.log("set theme:", { background, text });
+
+        setTheme({ background, text });
+        setCurrentTheme({ background, text });
+    }
+    useEffect(() => {
+        // for timer
+        if (!gameStarted || !timerRunning) return;
+
+        const timerId = setInterval(() => setTimer((t) => t + 1), 1000);
+        return () => clearInterval(timerId);
+    }, [timerRunning]);
+    function checkForMatch() {
+        const [first, second] = selectedCards;
+        setMoves(moves + 1);
+
+        // if matched
+        if (first.color === second.color && first.id !== second.id) {
+            setMatchedCards([...matchedCards, first, second]);
+            setSelectedsCards([]);
+            [first, second].forEach((card) => (card.matched = true));
+            return;
+        }
+
+        setErrors(errors + 1);
+        setIsInteractable(false);
+
+        setTimeout(() => {
+            selectedCards.forEach((card) => (card.flipped = false));
+            setSelectedsCards([]);
+            setIsInteractable(true);
+        }, 500);
+    }
+    function revealAllCards(delay = 1000) {
         setShowBack(true);
         setIsInteractable(false);
         setTimeout(() => {
             setShowBack(false);
             setIsInteractable(true);
-        }, time);
+        }, delay);
     }
-    function checkForMatch() {
-        if (
-            selectedCards[0].color === selectedCards[1].color &&
-            selectedCards[0].id !== selectedCards[1].id
-        ) {
-            setMatchedCards([...matchedCards, ...selectedCards]);
-            setSelectedsCards([]);
-            setMoves(moves + 1);
-
-            selectedCards.forEach((card) => {
-                card.matched = true;
-            });
-        } else {
-            setErrors(errors + 1);
-            setSelectedsCards([]);
-
-            setIsInteractable(false);
-            setTimeout(() => {
-                selectedCards.forEach((card) => {
-                    card.flipped = false;
-                });
-                setIsInteractable(true);
-                setSelectedsCards([]);
-            }, 500);
-        }
-    }
-
-    function startGame() {
-        setGameStarted(!gameStarted);
-    }
-
     function generateGridCols() {
         const divisors = [];
 
@@ -317,14 +293,16 @@ export default function Game({ auth, backgrounds }) {
                     <PrimaryButton onClick={() => setLevel(level + 1)}>
                         next
                     </PrimaryButton>
-                    <PrimaryButton onClick={startGame}>restart</PrimaryButton>
-                    <PrimaryButton onClick={() => showAllCards()}>
+                    <PrimaryButton onClick={() => startNewGame()}>
+                        restart
+                    </PrimaryButton>
+                    <PrimaryButton onClick={() => revealAllCards()}>
                         Powerups
                     </PrimaryButton>
                     <PrimaryButton onClick={() => setShopOpen(true)}>
                         Shop
                     </PrimaryButton>
-                    <PrimaryButton onClick={ChangeThemeHandler}>
+                    <PrimaryButton onClick={() => ChangeThemeButton()}>
                         theme
                     </PrimaryButton>
                 </div>
@@ -385,7 +363,7 @@ function Card({ card, flipCard, showBack = false, cards }) {
     if (cards > 20) {
         return (
             <div
-                className="w-fit min-w-[6rem] border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-lg aspect-square flex-1 cursor-pointer"
+                className="w-fit min-w-[6em] border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-lg aspect-square flex-1 cursor-pointer"
                 onClick={() => flipCard(card)}
             >
                 {showBack || card.flipped || card.matched ? (
@@ -408,23 +386,38 @@ function Card({ card, flipCard, showBack = false, cards }) {
         );
     }
     return (
-        <div
-            className="w-fit min-w-32 border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-md aspect-square flex-1 cursor-pointer"
-            onClick={() => flipCard(card)}
-        >
-            {showBack || card.flipped || card.matched ? (
-                <p
-                    style={{
-                        backgroundColor: card.color,
-                        color: chroma(card.color).darken(2).desaturate(2).hex(),
-                    }}
-                    className="h-full rounded-md flex items-center justify-center text-md font-bold p-4"
-                >
-                    {card.color}
-                </p>
-            ) : (
-                <p className=""></p>
-            )}
+        <div className="min-w-[8em] aspect-square cursor-pointer group [perspective:30rem]">
+            <div
+                className={
+                    "relative w-full h-full duration-500 [transform-style:preserve-3d] [transform:rotateY(180deg)]" +
+                    (showBack || card.flipped || card.matched
+                        ? "[transform:rotateY(180deg)]"
+                        : "")
+                }
+                onClick={() => flipCard(card)}
+            >
+                <div className="w-full h-full absolute">
+                    <div
+                        className="absolute w-full h-full flex justify-center items-center rounded-md overflow-hidden [backface-visibility:hidden]"
+                        style={{
+                            backgroundColor: card.color,
+                            color: chroma(card.color)
+                                .darken(2)
+                                .desaturate(2)
+                                .hex(),
+                        }}
+                    >
+                        <span className="select-none font-extrabold text-md ">
+                            {card.color}
+                        </span>
+                    </div>
+                </div>
+                <div className="absolute [transform:rotateY(180deg)] flex justify-center items-center w-full h-full rounded-md overflow-hidden bg-gradient-to-b from-neutral-100 to-neutral-200 text-neutral-400 [backface-visibility:hidden]">
+                    <span className="select-none font-extrabold text-3xl">
+                        ?
+                    </span>
+                </div>
+            </div>
         </div>
     );
 }
