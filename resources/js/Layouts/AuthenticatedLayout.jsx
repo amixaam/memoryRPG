@@ -11,7 +11,7 @@ export default function Authenticated({ user, header, children }) {
 
     return (
         <div className="min-h-screen relative grid grid-rows-[auto_1fr]">
-            <div className="min-h-screen w-full fixed -z-20 from-primary400 to-primary0 bg-gradient-to-b" />
+            <div className="min-h-screen w-full fixed -z-20 bg-primary300" />
             <nav className="bg-primary500 border-b border-primary0">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
@@ -161,7 +161,7 @@ export default function Authenticated({ user, header, children }) {
                 </div>
             </nav>
 
-            <main className="max-w-7xl mx-auto sm:px-6 lg:px-8 w-full flex items-end ">
+            <main className="max-w-7xl mx-auto lg:px-6 w-full flex items-end ">
                 <div className="w-full flex flex-row justify-center items-end relative h-full">
                     {children}
                 </div>

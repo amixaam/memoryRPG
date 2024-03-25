@@ -14,3 +14,74 @@
     --color-800: #d7d7d7;
     --color-900: #f2f2f2;
 }
+
+* {
+    /* border: white 1px solid; */
+}
+
+@keyframes matchAnimation {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+@keyframes matchAll {
+    0% {
+        transform: scale(0.9);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.matched {
+    animation: matchAnimation 0.5s;
+}
+.all-matched {
+    animation: matchAll 0.5s;
+}
+
+.hit {
+    animation: hitAnimation 0.5s;
+}
+
+.killed {
+    animation: killAnimation 1.5s;
+}
+
+@keyframes killAnimation {
+    0% {
+        transform: scale(1.2);
+        filter: brightness(1) saturate(100);
+    }
+
+    50% {
+        opacity: 0;
+    }
+    100% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+}
+
+@keyframes hitAnimation {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        filter: brightness(1.2) saturate(5) contrast(10);
+        transform: scale(1.2);
+    }
+}

@@ -6,9 +6,10 @@ import chroma from "chroma-js";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
-import { useLocalStorage } from "@uidotdev/usehooks";
+import { useLocalStorage, usePrevious } from "@uidotdev/usehooks";
 
 import shrek from "../../../public/images/shrek.webp";
+import { MaterialSymbol } from "react-material-symbols";
 dayjs.extend(duration);
 
 export default function Game({ auth, backgrounds }) {
@@ -38,6 +39,8 @@ export default function Game({ auth, backgrounds }) {
     const [gameStarted, setGameStarted] = useState(false);
 
     const [isInteractable, setIsInteractable] = useState(false);
+    const [matched, setMatched] = useState(false);
+    const [killed, setKilled] = useState(false);
     const [points, setPoints] = useState(0);
 
     const [cards, setCards] = useState([]);
@@ -112,7 +115,8 @@ export default function Game({ auth, backgrounds }) {
             checkForMatch();
         }
         if (allMatched && moves > 1) {
-            setLevel(level + 1);
+            if (level % 5 === 0) setKilled(true);
+            if (level < 20) setLevel(level + 1);
         }
     }, [selectedCards]);
 
@@ -120,9 +124,9 @@ export default function Game({ auth, backgrounds }) {
         // for next level
         if (level > 20 || level === 1) return;
 
-        setBossLevel(level % 5 === 0);
+        setCurrentTheme(level % 5 ? theme : bossTheme);
         setTimeout(() => {
-            setCurrentTheme(bossLevel ? bossTheme : theme);
+            setBossLevel(level % 5 === 0);
             setSelectedsCards([]);
             setMatchedCards([]);
 
@@ -135,6 +139,8 @@ export default function Game({ auth, backgrounds }) {
             );
 
             // new cards
+            console.log("killed == false");
+            setKilled(false);
             generateCards();
             revealAllCards(1000 + cards.length * 100);
         }, 750);
@@ -207,6 +213,11 @@ export default function Game({ auth, backgrounds }) {
             setMatchedCards([...matchedCards, first, second]);
             setSelectedsCards([]);
             [first, second].forEach((card) => (card.matched = true));
+
+            setMatched(true);
+            setTimeout(() => {
+                setMatched(false);
+            }, 500);
             return;
         }
 
@@ -230,6 +241,11 @@ export default function Game({ auth, backgrounds }) {
     function generateGridCols() {
         const divisors = [];
 
+        if (cards.length == 8) {
+            return 4;
+        } else if (cards.length == 20) {
+            return 10;
+        }
         for (let i = 15; i >= 4; i--) {
             if (cards.length % i === 0) {
                 divisors.push(i);
@@ -244,38 +260,68 @@ export default function Game({ auth, backgrounds }) {
             <Head title="MemoryRPG" />
 
             <Modal show={shopOpen} onClose={() => setShopOpen(false)}>
-                <h1>SHOP</h1>
+                <h1 className="text-3xl font-extrabold">SHOP</h1>
                 <p className="">Points: {points}</p>
+                <div className="flex gap-2 mt-4 w-full flex-col md:flex-row">
+                    <div className="flex flex-col w-full md:w-fit justify-center items-center gap-2 rounded-md p-4 border-2 border-primary400 bg-primary200">
+                        <MaterialSymbol
+                            icon="package_2"
+                            size={64}
+                            fill
+                            grade={-25}
+                            className="text-primary800"
+                        />
+                        <h2 className="text-lg font-extrabold">
+                            THEME LOOTBOX
+                        </h2>
+                        <div className="flex items-center justify-between w-full gap-2">
+                            <p>5K points</p>
+                            <PrimaryButton>buy</PrimaryButton>
+                        </div>
+                    </div>
+                    <div className="flex flex-col w-full md:w-fit justify-center items-center gap-2 rounded-md p-4 border-2 border-primary400 bg-primary200">
+                        <MaterialSymbol
+                            icon="visibility"
+                            size={64}
+                            fill
+                            grade={-25}
+                            className="text-primary800"
+                        />
+                        <h2 className="text-lg font-extrabold">SEE ALL</h2>
+                        <div className="flex items-center justify-between w-full gap-2">
+                            <p>5K points</p>
+                            <PrimaryButton>buy</PrimaryButton>
+                        </div>
+                    </div>
+                </div>
             </Modal>
 
             <ProgressBar
                 max={cards.length}
                 current={matchedCards.length}
                 show={bossLevel}
+                bossName="SHRED"
+                isHit={matched}
             />
 
-            <div className="flex justify-center relative mb-4">
-                <div className="w-fit">
+            <div className="flex justify-center relative flex-col pb-4 w-full px-4 lg:px-0 backdrop-blur-xl pt-2 border-t-2 border-primary200">
+                <div className="w-full flex-col flex items-center ">
                     <Statistics>
-                        <p className="bg-primary0 px-3 rounded-full">
+                        <p className="bg-primary0 px-3 py-1 rounded-md font-bold text-sm md:text-lg">
                             Level: {level}
                         </p>
-                        <p className="bg-primary0 px-3 rounded-full">
+                        <p className="bg-primary0 px-3 py-1 rounded-md font-bold text-sm md:text-lg">
                             Points: {points}
                         </p>
-                        <p className="bg-primary0 px-3 rounded-full">
-                            Card count: {cards.length}
-                        </p>
-                        <p className="bg-primary0 px-3 rounded-full">
+                        <p className="bg-primary0 px-3 py-1 rounded-md font-bold text-sm md:text-lg">
                             Timer:{" "}
                             {dayjs.duration(timer * 1000).format("mm:ss")}
                         </p>
                     </Statistics>
                     <div
-                        className={`grid`}
+                        className={`grid gap-1 sm:gap-2 md:gap-[0.6rem] w-full md:w-fit`}
                         style={{
-                            gridTemplateColumns: `repeat(${generateGridCols()}, 1fr)`,
-                            gap: level > 16 ? "4px" : "8px",
+                            gridTemplateColumns: `repeat(${generateGridCols()}, auto)`,
                         }}
                     >
                         {cards.map((card) => (
@@ -289,7 +335,7 @@ export default function Game({ auth, backgrounds }) {
                         ))}
                     </div>
                 </div>
-                <div className="flex gap-2 justify-center pt-4 flex-col absolute left-[calc(100%+8px)] bottom-0">
+                <div className="flex gap-2 justify-center pt-4 flex-row">
                     <PrimaryButton onClick={() => setLevel(level + 1)}>
                         next
                     </PrimaryButton>
@@ -297,30 +343,35 @@ export default function Game({ auth, backgrounds }) {
                         restart
                     </PrimaryButton>
                     <PrimaryButton onClick={() => revealAllCards()}>
-                        Powerups
+                        See all
                     </PrimaryButton>
                     <PrimaryButton onClick={() => setShopOpen(true)}>
                         Shop
                     </PrimaryButton>
                     <PrimaryButton onClick={() => ChangeThemeButton()}>
-                        theme
+                        themes
                     </PrimaryButton>
                 </div>
             </div>
 
-            <BossImage bossLevel={bossLevel} />
+            <BossImage
+                bossLevel={bossLevel}
+                isMatched={matched}
+                isKilled={killed}
+            />
         </AuthenticatedLayout>
     );
 }
 
-function BossImage({ bossLevel }) {
+function BossImage({ bossLevel, isMatched, isKilled }) {
     if (!bossLevel) return;
+
     return (
-        <div className="fixed top-0 left-0 w-screen h-screen flex justify-center items-center -z-[1]">
+        <div className="fixed flex justify-center items-center -z-[1] bottom-40 md:bottom-[-5%]">
             <img
                 src={shrek}
                 alt="boss fight"
-                className="fixed brightness-[0.05] pointer-events-none top-16"
+                className={`brightness-[0.05] pointer-events-none ${isMatched ? "hit" : ""} ${isKilled ? "killed" : ""}`}
             />
         </div>
     );
@@ -328,13 +379,13 @@ function BossImage({ bossLevel }) {
 
 function Statistics({ children }) {
     return (
-        <div className="text-primary900 flex flex-row gap-2 w-full pointer-events-none mb-2">
+        <div className="text-primary900 flex flex-row gap-2 pointer-events-none mb-2">
             {children}
         </div>
     );
 }
 
-function ProgressBar({ max, current, show, bossName = "Boss name" }) {
+function ProgressBar({ max, current, show, bossName = "SHREK", isHit }) {
     const [showProgress, setShowProgress] = useState(0);
 
     useEffect(() => {
@@ -345,7 +396,12 @@ function ProgressBar({ max, current, show, bossName = "Boss name" }) {
 
     if (!show) return;
     return (
-        <div className="pointer-events-none z-10 absolute top-0 flex flex-col items-center w-4/5 mt-2">
+        <div
+            className={`pointer-events-none z-10 absolute top-0 flex flex-col items-center w-full p-4 gap-1 ${isHit ? "hit" : ""}`}
+        >
+            <h1 className="text-lg font-extrabold text-primary900 bg-primary0 px-3 flex justify-center items-center rounded-full">
+                {bossName}
+            </h1>
             <div className="text-primary0 w-full bg-primary0 rounded-full p-1">
                 <div
                     style={{ width: showProgress }}
@@ -359,34 +415,10 @@ function ProgressBar({ max, current, show, bossName = "Boss name" }) {
 }
 
 function Card({ card, flipCard, showBack = false, cards }) {
-    // return <div className="text-primary900">hi</div>;
-    if (cards > 20) {
-        return (
-            <div
-                className="w-fit min-w-[6em] border-primary800 bg-text backdrop-blur-md border-2 p-2 radius rounded-lg aspect-square flex-1 cursor-pointer"
-                onClick={() => flipCard(card)}
-            >
-                {showBack || card.flipped || card.matched ? (
-                    <p
-                        style={{
-                            backgroundColor: card.color,
-                            color: chroma(card.color)
-                                .darken(2)
-                                .desaturate(2)
-                                .hex(),
-                        }}
-                        className="h-full rounded-lg flex items-center justify-center text-sm font-bold"
-                    >
-                        {card.color}
-                    </p>
-                ) : (
-                    <p className=""></p>
-                )}
-            </div>
-        );
-    }
     return (
-        <div className="min-w-[8em] aspect-square cursor-pointer group [perspective:30rem]">
+        <div
+            className={`min-w-[1.5rem] md:min-w-[5rem] md:max-w-[10rem] w-full aspect-square cursor-pointer group [perspective:30rem] ${card.matched ? "matched" : ""} ${showBack ? "all-matched" : ""}`}
+        >
             <div
                 className={
                     "relative w-full h-full duration-500 [transform-style:preserve-3d] [transform:rotateY(180deg)]" +
@@ -407,13 +439,13 @@ function Card({ card, flipCard, showBack = false, cards }) {
                                 .hex(),
                         }}
                     >
-                        <span className="select-none font-extrabold text-md ">
+                        <span className="select-none font-extrabold text-xs md:text-md lg:text-lg opacity-0 md:opacity-100">
                             {card.color}
                         </span>
                     </div>
                 </div>
                 <div className="absolute [transform:rotateY(180deg)] flex justify-center items-center w-full h-full rounded-md overflow-hidden bg-gradient-to-b from-neutral-100 to-neutral-200 text-neutral-400 [backface-visibility:hidden]">
-                    <span className="select-none font-extrabold text-3xl">
+                    <span className="w-full h-full select-none font-extrabold md:text-3xl text-xl flex justify-center items-center">
                         ?
                     </span>
                 </div>
