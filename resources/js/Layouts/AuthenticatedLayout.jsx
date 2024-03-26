@@ -33,7 +33,7 @@ export default function Authenticated({ user, header, children }) {
                                     href={route("stats")}
                                     active={route().current("stats")}
                                 >
-                                    Statistics
+                                    Statistics & Leaderboard
                                 </NavLink>
                             </div>
                         </div>

@@ -18,11 +18,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained();
             $table->integer('mistakes')->default(0);
+            $table->integer('moves')->default(0);
             $table->integer('level_reached')->default(0);
-            $table->integer('bosses_beaten')->default(0);
-            $table->integer('items_bought')->default(0);
-            $table->integer('lootboxes_rolled')->default(0);
-            $table->boolean('result');
+            $table->integer('timer')->default(0);
+            $table->integer('points')->default(0);
+            $table->boolean('result')->default(0);
             $table->timestamps();
         });
 

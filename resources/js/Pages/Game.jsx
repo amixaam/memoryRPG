@@ -4,12 +4,14 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router } from "@inertiajs/react";
 import chroma from "chroma-js";
 import { useEffect, useState } from "react";
-import dayjs from "dayjs";
-import duration from "dayjs/plugin/duration";
 import { useLocalStorage, usePrevious } from "@uidotdev/usehooks";
+import { MaterialSymbol } from "react-material-symbols";
+import { router as inertiaRouter } from "@inertiajs/react";
 
 import shrek from "../../../public/images/shrek.webp";
-import { MaterialSymbol } from "react-material-symbols";
+
+import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
 dayjs.extend(duration);
 
 export default function Game({ auth, backgrounds }) {
@@ -34,7 +36,8 @@ export default function Game({ auth, backgrounds }) {
     const [selectedDifficulty, setSelectedDifficulty] = useState("easy");
     const [timer, setTimer] = useState(0);
     const [timerRunning, setTimerRunning] = useState(false);
-    const [gameOver, setGameOver] = useState(false);
+
+    const [gameOver, setGameOver] = useState(null);
     const [gameWon, setGameWon] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
 
@@ -53,6 +56,25 @@ export default function Game({ auth, backgrounds }) {
     const [bossLevel, setBossLevel] = useState(false);
 
     const [shopOpen, setShopOpen] = useState(false);
+
+    function endGame() {
+        setGameStarted(false);
+        setTimerRunning(false);
+        setGameOver(true);
+        setGameWon(level >= 20 ? true : false);
+
+        if (level === 1) return;
+
+        inertiaRouter.post("/stats/store", {
+            user_id: auth.user.id,
+            mistakes: errors,
+            moves: moves,
+            level_reached: level - 1,
+            timer: timer,
+            points: points,
+            result: level >= 20 ? true : false,
+        });
+    }
 
     function generateCards() {
         setCards([]); // Clear existing cards
@@ -116,15 +138,20 @@ export default function Game({ auth, backgrounds }) {
         }
         if (allMatched && moves > 1) {
             if (level % 5 === 0) setKilled(true);
-            if (level < 20) setLevel(level + 1);
+            if (level <= 20) setLevel(level + 1);
         }
     }, [selectedCards]);
 
     useEffect(() => {
         // for next level
-        if (level > 20 || level === 1) return;
+        if (level === 1) return;
 
         setCurrentTheme(level % 5 ? theme : bossTheme);
+        if (level > 20) {
+            endGame();
+            return;
+        }
+
         if (level % 5 === 1) {
             setKilled(true);
             setTimeout(() => {
@@ -170,7 +197,7 @@ export default function Game({ auth, backgrounds }) {
 
     useEffect(() => {
         // for new game
-        // if (!gameStarted) return;
+        if (!gameStarted) return;
 
         setTimer(0);
         setMoves(0);
@@ -207,7 +234,7 @@ export default function Game({ auth, backgrounds }) {
 
     function startNewGame() {
         setLevel(1);
-        setGameStarted(!gameStarted);
+        setGameStarted(true);
     }
     function ChangeThemeButton(newTheme = null) {
         const themePick =
@@ -221,7 +248,7 @@ export default function Game({ auth, backgrounds }) {
     }
     useEffect(() => {
         // for timer
-        if (!gameStarted || !timerRunning) return;
+        if (!timerRunning) return;
 
         const timerId = setInterval(() => setTimer((t) => t + 1), 1000);
         return () => clearInterval(timerId);
@@ -276,7 +303,50 @@ export default function Game({ auth, backgrounds }) {
 
         return divisors[((divisors.length - 1) / 2) | 0];
     }
-
+    if (gameOver) {
+        return (
+            <AuthenticatedLayout user={auth.user}>
+                <Head title="MemoryRPG" />
+                <div className="w-full h-full items-center justify-center flex flex-col gap-4">
+                    <h1 className="text-7xl font-extrabold">
+                        {gameWon ? "Match won!" : "Match lost!"}
+                    </h1>
+                    <div className="text-center">
+                        <p>You earned {points} points</p>
+                        <p>
+                            and made {moves} moves and {errors} mistakes
+                        </p>
+                        <p>
+                            time spent:{" "}
+                            {dayjs.duration(timer * 1000).format("mm:ss")}{" "}
+                        </p>
+                    </div>
+                    <PrimaryButton onClick={startNewGame}>
+                        Try again
+                    </PrimaryButton>
+                </div>
+            </AuthenticatedLayout>
+        );
+    } else if (!gameStarted) {
+        return (
+            <AuthenticatedLayout user={auth.user}>
+                <Head title="MemoryRPG" />
+                <div className="w-full h-full items-center justify-center flex flex-col gap-4">
+                    <h1 className="text-5xl md:text-7xl font-extrabold">
+                        MemoryRPG
+                    </h1>
+                    <div className="text-center">
+                        <p>You will be timed.</p>
+                        <p>Match the cards and earn points for shop rewards!</p>
+                        <p>Click the button below to start</p>
+                    </div>
+                    <PrimaryButton onClick={startNewGame}>
+                        Start game
+                    </PrimaryButton>
+                </div>
+            </AuthenticatedLayout>
+        );
+    }
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="MemoryRPG" />
@@ -297,7 +367,7 @@ export default function Game({ auth, backgrounds }) {
                             THEME LOOTBOX
                         </h2>
                         <div className="flex items-center justify-between w-full gap-2">
-                            <p>5K points</p>
+                            <p>15K points</p>
                             <PrimaryButton>buy</PrimaryButton>
                         </div>
                     </div>
@@ -361,8 +431,9 @@ export default function Game({ auth, backgrounds }) {
                     <PrimaryButton onClick={() => setLevel(level + 1)}>
                         next
                     </PrimaryButton>
-                    <PrimaryButton onClick={() => startNewGame()}>
-                        restart
+
+                    <PrimaryButton onClick={() => endGame()}>
+                        end game
                     </PrimaryButton>
                     <PrimaryButton onClick={() => revealAllCards()}>
                         See all

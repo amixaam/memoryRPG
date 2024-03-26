@@ -14,10 +14,10 @@ class GameHistory extends Model
     protected $fillable = [
         'user_id',
         'mistakes',
+        'moves',
         'level_reached',
-        'bosses_beaten',
-        'items_bought',
-        'lootboxes_rolled',
+        'timer',
+        'points',
         'result'
     ];
 }

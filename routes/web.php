@@ -5,6 +5,7 @@ use App\Http\Controllers\GameHistoryController;
 use App\Http\Controllers\ProfileController;
 use App\Models\Background;
 use App\Models\GameHistory;
+use App\Models\User;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -38,7 +39,16 @@ Route::get('/', function () {
 Route::get('/stats', function () {
     return Inertia::render('Stats/View', [
         'backgrounds' => Background::all(),
-        'statistics' => GameHistory::all(),
+        'statistics' => GameHistory::where('user_id', auth()->id())->get(),
+        'leaderboard' => GameHistory::select('user_id', 'points', 'created_at')
+            ->orderByDesc('points')
+            ->limit(10)
+            ->get()
+            ->map(function ($item) {
+                return array_merge($item->toArray(), [
+                    'name' => User::find($item->user_id)->name,
+                ]);
+            })->toArray(),
     ]);
 })->middleware(['auth', 'verified'])->name('stats');
 
@@ -49,6 +59,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::post('/stats/store', [GameHistoryController::class, 'store'])->name('gameHistory.store');
 });
 
 require __DIR__ . '/auth.php';
