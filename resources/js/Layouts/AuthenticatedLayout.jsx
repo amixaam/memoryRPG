@@ -90,7 +90,7 @@ export default function Authenticated({ user, header, children }) {
                                         (previousState) => !previousState
                                     )
                                 }
-                                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-900 focus:text-gray-500 dark:focus:text-gray-400 transition duration-150 ease-in-out"
+                                className="inline-flex items-center justify-center p-2 rounded-md text-primary900 hover:text-primary700  hover:bg-primary300  focus:outline-none focus:bg-primary0 focus:text-primary900  transition duration-150 ease-in-out"
                             >
                                 <svg
                                     className="h-6 w-6"
@@ -137,16 +137,22 @@ export default function Authenticated({ user, header, children }) {
                             href={route("game")}
                             active={route().current("game")}
                         >
-                            Dashboard
+                            Game
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route("stats")}
+                            active={route().current("stats")}
+                        >
+                            Statistics
                         </ResponsiveNavLink>
                     </div>
 
-                    <div className="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
+                    <div className="pt-4 pb-1 border-t border-primary400">
                         <div className="px-4">
-                            <div className="font-medium text-base text-gray-800 dark:text-gray-200">
+                            <div className="font-medium text-base text-primary100">
                                 {user.name}
                             </div>
-                            <div className="font-medium text-sm text-gray-500">
+                            <div className="font-medium text-sm text-primary800 ">
                                 {user.email}
                             </div>
                         </div>
