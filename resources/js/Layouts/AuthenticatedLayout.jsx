@@ -29,6 +29,12 @@ export default function Authenticated({ user, header, children }) {
                                 >
                                     Game
                                 </NavLink>
+                                <NavLink
+                                    href={route("stats")}
+                                    active={route().current("stats")}
+                                >
+                                    Statistics
+                                </NavLink>
                             </div>
                         </div>
 

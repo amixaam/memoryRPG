@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\BackgroundsController;
+use App\Http\Controllers\GameHistoryController;
 use App\Http\Controllers\ProfileController;
 use App\Models\Background;
+use App\Models\GameHistory;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -32,6 +34,14 @@ Route::get('/', function () {
         'backgrounds' => Background::all(),
     ]);
 })->middleware(['auth', 'verified'])->name('game');
+
+Route::get('/stats', function () {
+    return Inertia::render('Stats/View', [
+        'backgrounds' => Background::all(),
+        'statistics' => GameHistory::all(),
+    ]);
+})->middleware(['auth', 'verified'])->name('stats');
+
 
 Route::post('/backgrounds', [BackgroundsController::class, 'create']);
 

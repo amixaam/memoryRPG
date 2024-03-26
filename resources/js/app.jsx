@@ -1,6 +1,5 @@
 import "./bootstrap";
 import "../css/app.css";
-import { MaterialSymbol } from "react-material-symbols";
 import "react-material-symbols/rounded";
 
 import { createRoot } from "react-dom/client";

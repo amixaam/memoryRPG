@@ -125,25 +125,47 @@ export default function Game({ auth, backgrounds }) {
         if (level > 20 || level === 1) return;
 
         setCurrentTheme(level % 5 ? theme : bossTheme);
-        setTimeout(() => {
-            setBossLevel(level % 5 === 0);
-            setSelectedsCards([]);
-            setMatchedCards([]);
+        if (level % 5 === 1) {
+            setKilled(true);
+            setTimeout(() => {
+                setTimeout(() => {
+                    setBossLevel(level % 5 === 0);
+                    setSelectedsCards([]);
+                    setMatchedCards([]);
 
-            setPoints(
-                (prevPoints) =>
-                    prevPoints +
-                    Math.floor(
-                        cards.length * 100 + difficulty[selectedDifficulty] * 20
-                    )
-            );
+                    setPoints(
+                        (prevPoints) =>
+                            prevPoints +
+                            Math.floor(
+                                cards.length * 100 +
+                                    difficulty[selectedDifficulty] * 20
+                            )
+                    );
 
-            // new cards
-            console.log("killed == false");
-            setKilled(false);
-            generateCards();
-            revealAllCards(1000 + cards.length * 100);
-        }, 750);
+                    setKilled(false);
+                    generateCards();
+                    revealAllCards(1000 + cards.length * 100);
+                }, 500);
+            }, 800);
+        } else {
+            setTimeout(() => {
+                setBossLevel(level % 5 === 0);
+                setSelectedsCards([]);
+                setMatchedCards([]);
+
+                setPoints(
+                    (prevPoints) =>
+                        prevPoints +
+                        Math.floor(
+                            cards.length * 100 +
+                                difficulty[selectedDifficulty] * 20
+                        )
+                );
+
+                generateCards();
+                revealAllCards(1000 + cards.length * 100);
+            }, 750);
+        }
     }, [level]);
 
     useEffect(() => {
@@ -263,7 +285,7 @@ export default function Game({ auth, backgrounds }) {
                 <h1 className="text-3xl font-extrabold">SHOP</h1>
                 <p className="">Points: {points}</p>
                 <div className="flex gap-2 mt-4 w-full flex-col md:flex-row">
-                    <div className="flex flex-col w-full md:w-fit justify-center items-center gap-2 rounded-md p-4 border-2 border-primary400 bg-primary200">
+                    <div className="flex flex-col w-full md:w-fit justify-center items-center gap-2 rounded-md p-4 border-2 border-primary400 bg-primary200 hover:shadow-lg duration-100">
                         <MaterialSymbol
                             icon="package_2"
                             size={64}
@@ -279,7 +301,7 @@ export default function Game({ auth, backgrounds }) {
                             <PrimaryButton>buy</PrimaryButton>
                         </div>
                     </div>
-                    <div className="flex flex-col w-full md:w-fit justify-center items-center gap-2 rounded-md p-4 border-2 border-primary400 bg-primary200">
+                    <div className="flex flex-col w-full md:w-fit justify-center items-center gap-2 rounded-md p-4 border-2 border-primary400 bg-primary200 hover:shadow-lg duration-100">
                         <MaterialSymbol
                             icon="visibility"
                             size={64}
