@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GameHistory;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Http\Request;
 
@@ -22,6 +23,7 @@ class GameHistoryController extends Controller
             'result' => ['required', 'boolean'],
         ]);
 
-        $gameHistory = GameHistory::create($validated);
+        GameHistory::create($validated);
+        User::find($validated['user_id'])->increment('currency', $validated['points']);
     }
 }

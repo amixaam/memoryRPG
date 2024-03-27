@@ -1,11 +1,11 @@
 import Modal from "@/Components/Modal";
 import PrimaryButton from "@/Components/PrimaryButton";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, router } from "@inertiajs/react";
 import chroma from "chroma-js";
 import { useEffect, useState } from "react";
 import { useLocalStorage, usePrevious } from "@uidotdev/usehooks";
 import { MaterialSymbol } from "react-material-symbols";
+import { Head } from "@inertiajs/react";
 import { router as inertiaRouter } from "@inertiajs/react";
 
 import shrek from "../../../public/images/shrek.webp";
@@ -14,14 +14,15 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 dayjs.extend(duration);
 
-export default function Game({ auth, backgrounds }) {
+export default function Game({ auth, unlocks, backgrounds }) {
     const [theme, setTheme] = useLocalStorage("theme", {
         background: "#F6B8FF",
         text: "#1F0923",
     });
-
-    const [currentTheme, setCurrentTheme] = useState(theme);
-
+    const [currentTheme, setCurrentTheme] = useState(theme, {
+        background: "#F6B8FF",
+        text: "#1F0923",
+    });
     const bossTheme = {
         background: "#080303",
         text: "#FF3232",
@@ -56,6 +57,7 @@ export default function Game({ auth, backgrounds }) {
     const [bossLevel, setBossLevel] = useState(false);
 
     const [shopOpen, setShopOpen] = useState(false);
+    const [themesOpen, setThemesOpen] = useState(false);
 
     function endGame() {
         setGameStarted(false);
@@ -110,7 +112,6 @@ export default function Game({ auth, backgrounds }) {
                 ]
             );
         }
-        console.log(cardCount);
         setCards(newCards);
         newCards.sort(() => Math.random() - 0.5);
     }
@@ -221,7 +222,6 @@ export default function Game({ auth, backgrounds }) {
             const palette = chroma
                 .scale([currentTheme.background, currentTheme.text])
                 .colors(10);
-
             // change :root
             for (let i = 0; i < palette.length; i++) {
                 document.documentElement.style.setProperty(
@@ -236,16 +236,12 @@ export default function Game({ auth, backgrounds }) {
         setLevel(1);
         setGameStarted(true);
     }
-    function ChangeThemeButton(newTheme = null) {
-        const themePick =
-            newTheme ||
-            backgrounds[Math.floor(Math.random() * backgrounds.length)];
-        const { background, text } = JSON.parse(themePick.colors);
-        console.log("set theme:", { background, text });
-
+    function ChangeThemeButton(id = 1) {
+        const { background, text } = JSON.parse(backgrounds[id].colors);
         setTheme({ background, text });
         setCurrentTheme({ background, text });
     }
+
     useEffect(() => {
         // for timer
         if (!timerRunning) return;
@@ -303,6 +299,22 @@ export default function Game({ auth, backgrounds }) {
 
         return divisors[((divisors.length - 1) / 2) | 0];
     }
+
+    function unlockRandomTheme() {
+        let newTheme;
+        let checked = 0;
+        do {
+            newTheme =
+                backgrounds[Math.floor(Math.random() * backgrounds.length)];
+            checked++;
+        } while (checked <= 100 && !unlocks.some((u) => u.id === newTheme.id));
+
+        unlocks.push(newTheme.id);
+        inertiaRouter.patch("/user/unlocks", { id: newTheme.id });
+        const { background, text } = JSON.parse(newTheme.colors);
+        setCurrentTheme({ background, text });
+    }
+
     if (gameOver) {
         return (
             <AuthenticatedLayout user={auth.user}>
@@ -388,6 +400,42 @@ export default function Game({ auth, backgrounds }) {
                 </div>
             </Modal>
 
+            <Modal show={themesOpen} onClose={() => setThemesOpen(false)}>
+                <h1 className="text-3xl font-extrabold">Themes</h1>
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                    {backgrounds.map((bg) => (
+                        <div className="flex flex-col items-center justify-center">
+                            <div
+                                key={bg.id}
+                                className={`flex items-center justify-center bg-no-repeat bg-cover bg-center w-[5rem] aspect-square rounded-md ${
+                                    !unlocks.some((u) => u === bg.id)
+                                        ? "pointer-events-none opacity-50"
+                                        : "cursor-pointer"
+                                }`}
+                                onClick={() =>
+                                    unlocks.some((u) => u === bg.id) &&
+                                    ChangeThemeButton(bg.id - 1)
+                                }
+                                style={{
+                                    backgroundImage: `linear-gradient(to bottom, ${JSON.parse(bg.colors).text}, ${JSON.parse(bg.colors).background})`,
+                                }}
+                            >
+                                {!unlocks.some((u) => u === bg.id) && (
+                                    <MaterialSymbol
+                                        icon="lock"
+                                        size={32}
+                                        fill
+                                        grade={-25}
+                                        className="text-white"
+                                    />
+                                )}
+                            </div>
+                            <p>{bg.name}</p>
+                        </div>
+                    ))}
+                </div>
+            </Modal>
+
             <ProgressBar
                 max={cards.length}
                 current={matchedCards.length}
@@ -428,9 +476,9 @@ export default function Game({ auth, backgrounds }) {
                     </div>
                 </div>
                 <div className="flex gap-2 justify-center pt-4 flex-row">
-                    <PrimaryButton onClick={() => setLevel(level + 1)}>
+                    {/* <PrimaryButton onClick={() => setLevel(level + 1)}>
                         next
-                    </PrimaryButton>
+                    </PrimaryButton> */}
 
                     <PrimaryButton onClick={() => endGame()}>
                         end game
@@ -441,7 +489,7 @@ export default function Game({ auth, backgrounds }) {
                     <PrimaryButton onClick={() => setShopOpen(true)}>
                         Shop
                     </PrimaryButton>
-                    <PrimaryButton onClick={() => ChangeThemeButton()}>
+                    <PrimaryButton onClick={() => setThemesOpen(true)}>
                         themes
                     </PrimaryButton>
                 </div>
@@ -543,6 +591,20 @@ function Card({ card, flipCard, showBack = false, cards }) {
                     </span>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function Lootbox() {
+    return (
+        <div className="">
+            <MaterialSymbol
+                icon="package_2"
+                size={64}
+                fill
+                grade={-25}
+                className="text-primary800"
+            />
         </div>
     );
 }

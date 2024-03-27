@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->integer('currency')->default(0);
-            $table->array('unlocks')->default([]);
+            $table->json('unlocks')->nullable();
             $table->integer('powerups')->default(0);
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();

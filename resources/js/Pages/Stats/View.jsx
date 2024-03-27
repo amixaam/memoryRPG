@@ -15,13 +15,16 @@ export default function Statistics({ auth, statistics, leaderboard }) {
                 <div className="flex flex-col w-full h-full gap-4">
                     <h1 className="text-4xl text-primary900">Statistics</h1>
                     <div className="gap-4 grid grid-cols-1 md:grid-cols-3 sm:grid-cols-2 place-items-center">
+                        {Object.keys(leaderboard).length === 0 ? (
+                            <p className="text-2xl text-primary900">No data</p>
+                        ) : null}
                         {statistics
                             .slice()
                             .reverse()
                             .map((statistic, index) => (
                                 <div
                                     key={index}
-                                    className="text-2xl text-primary900 w-full md:w-fit min-w-[13rem] h-fit py-2 bg-primary200 items-center flex flex-col border-4 border-primary700 rounded-lg shadow-md"
+                                    className="text-2xl text-primary900 w-full md:w-fit min-w-[13rem] h-fit py-2 bg-primary200 items-center flex flex-col border-4 border-primary700 rounded-lg"
                                 >
                                     <p className="text-sm opacity-50">
                                         {Intl.DateTimeFormat("en-US").format(
@@ -45,7 +48,7 @@ export default function Statistics({ auth, statistics, leaderboard }) {
                                     />
                                     <p>{statistic.result ? "WIN" : "LOSE"}</p>
                                     <p>{statistic.points} points</p>
-                                    <div className="flex flex-row gap-2 mt-4">
+                                    <div className="flex flex-row gap-2 mt-4 text-white">
                                         <div className=" bg-red-500 px-2 flex justify-center rounded-lg pb-[1px]">
                                             {statistic.mistakes}
                                         </div>
@@ -58,7 +61,7 @@ export default function Statistics({ auth, statistics, leaderboard }) {
                                                 size={24}
                                                 fill
                                                 grade={-25}
-                                                className="text-primary800"
+                                                className="text-white"
                                             />
                                             {String(
                                                 statistic.level_reached
@@ -72,6 +75,9 @@ export default function Statistics({ auth, statistics, leaderboard }) {
                 <div className="flex flex-col w-full h-full gap-4">
                     <h1 className="text-4xl text-primary900">Leaderboard</h1>
                     <div className="border-4 rounded-lg border-primary700 flex flex-col gap-1 bg-primary100">
+                        {Object.keys(leaderboard).length === 0 ? (
+                            <p className="text-2xl text-primary900">No data</p>
+                        ) : null}
                         {Object.entries(leaderboard)
                             .sort((a, b) => b[1].points - a[1].points)
                             .map(([key, value]) => (
@@ -81,6 +87,8 @@ export default function Statistics({ auth, statistics, leaderboard }) {
                                 >
                                     <div className="flex flex-row justify-between">
                                         <h1 className="text-2xl text-primary900">
+                                            #{parseInt(key, 10) + 1}
+                                            {" - "}
                                             {value.name}
                                         </h1>
                                         <p className="text-xl text-primary900 opacity-50">
