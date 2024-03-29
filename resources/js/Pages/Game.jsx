@@ -62,13 +62,13 @@ export default function Game({
             kill: shrekKill,
         },
         {
-            name: "Otis",
+            name: "Mr. Barnyard",
             idle: otis,
             hit: otisHit,
             kill: otisKill,
         },
         {
-            name: "Walter",
+            name: "Waltuh",
             idle: walter,
             hit: walterHit,
             kill: walterKill,
@@ -257,7 +257,6 @@ export default function Game({
             }, 750);
         }
     }, [level]);
-    console.log(currentBoss);
 
     useEffect(() => {
         // for new game
@@ -467,7 +466,6 @@ export default function Game({
             </AuthenticatedLayout>
         );
     }
-
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="MemoryRPG" />
@@ -630,9 +628,9 @@ export default function Game({
                     </div>
                 </div>
                 <div className="flex gap-2 justify-center pt-4 flex-row">
-                    <PrimaryButton onClick={() => setLevel(level + 1)}>
+                    {/* <PrimaryButton onClick={() => setLevel(level + 1)}>
                         next
-                    </PrimaryButton>
+                    </PrimaryButton> */}
 
                     <PrimaryButton onClick={() => endGame()}>end</PrimaryButton>
                     <PrimaryButton
