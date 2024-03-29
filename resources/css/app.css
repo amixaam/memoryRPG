@@ -85,3 +85,18 @@
         transform: scale(1.2);
     }
 }
+
+.entrance {
+    animation: entrance 0.5s;
+}
+@keyframes entrance {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        filter: brightness(1.2) saturate(5) contrast(10);
+        transform: scale(1.2);
+    }
+}

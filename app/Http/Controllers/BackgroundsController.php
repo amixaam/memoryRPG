@@ -37,13 +37,9 @@ class BackgroundsController extends Controller
 
     public function unlock(Request $request)
     {
-        try {
-            $request->validate([
-                'id' => 'required|integer',
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json(['request' => $request->all(), 'errors' => $e->errors()], 422);
-        }
+        $request->validate([
+            'id' => 'required|integer',
+        ]);
 
         $user = User::find(auth()->id());
         $unlocks = $user->unlocks ? $user->unlocks : [];
@@ -51,7 +47,26 @@ class BackgroundsController extends Controller
         $unlocks[] = $request->id;
 
         $user->update(['unlocks' => array_unique($unlocks)]);
+    }
 
-        return response()->json(['message' => 'Theme unlocked successfully']);
+    public function buy(Request $request)
+    {
+
+        $request->validate([
+            'name' => 'required|string',
+            'price' => 'required|integer',
+        ]);
+
+        $user = User::find(auth()->id());
+        $user->decrement('currency', $request->price);
+        if ($request->name != 'Theme lootbox') $user->increment('powerups');
+        $user->save();
+    }
+
+    public function usePowerup()
+    {
+        $user = User::find(auth()->id());
+        $user->decrement('powerups');
+        $user->save();
     }
 }

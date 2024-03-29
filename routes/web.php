@@ -34,6 +34,8 @@ Route::get('/', function () {
     return Inertia::render('Game', [
         'unlocks' => auth()->user()->unlocks ? auth()->user()->unlocks : [],
         'backgrounds' => Background::all(),
+        'dbPoints' => auth()->user()->currency ?? 0,
+        'powerups' => auth()->user()->powerups ?? 0,
     ]);
 })->middleware(['auth', 'verified'])->name('game');
 
@@ -63,6 +65,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/stats/store', [GameHistoryController::class, 'store'])->name('gameHistory.store');
 
     Route::patch('/user/unlocks', [BackgroundsController::class, 'unlock']);
+    Route::patch('/user/purchase', [BackgroundsController::class, 'buy']);
+    Route::patch('/user/use-powerup', [BackgroundsController::class, 'usePowerup']);
 });
 
 require __DIR__ . '/auth.php';
